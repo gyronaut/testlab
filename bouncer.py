@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt;
 import matplotlib.animation as animation;
 
 PI = 3.14159265359;
-ANGLE = PI/2000.0;
+ANGLE = 1.745329E-6; #0.0001 degrees seperation for initial velocity.
 
 POS_INIT = [(13.0, 15.0), (13.0, 15.0),(13.0, 15.0),(13.0, 15.0),(13.0, 15.0),(13.0, 15.0)];
 VEL_INIT = [(np.cos(PI/4.0 + i*ANGLE), np.sin(PI/4.0 + i*ANGLE)) for i in range(-3, 3)];
@@ -43,8 +43,12 @@ def updateVelocity(pos, vel):
         #print 'theta {} old ({}, {}), transformed ({}, {}), new ({}, {})'.format(degrees, vel[0], vel[1], vx_prime, vy_prime, vx, vy);
         return [vx, vy];
     elif (np.abs(pos[0]) >= HALFWIDTH):
+        if(np.abs(pos[1]) >= HALFWIDTH):
+            return [-vel[0], -vel[1]];
         return [-vel[0], vel[1]];
     elif (np.abs(pos[1]) >= HALFWIDTH):
+        if(np.abs(pos[0]) >=HALFWIDTH):
+            return [-vel[0], -vel[1]];
         return [vel[0], -vel[1]];
     return vel;
 
@@ -77,11 +81,14 @@ plt.yticks([]);
 ax2.set_xlim([0.0, HALFWIDTH]);
 ax2.set_ylim([-1.0, 1.0]);
 ax2.set_aspect(20.0/2.0, adjustable='box');
+
+fig.tight_layout();
+
 phase = [];
 phaseobj = [];
 for i in range(0, NUM_POINTS):
     phase.append([[100], [100]]);
-    obj = ax2.plot(phase[i][0], phase[i][1], color=COLORS[i], marker = '.', markersize = 4.0, linestyle='None')[0];
+    obj = ax2.plot(phase[i][0], phase[i][1], color=COLORS[i], marker = '.', markersize = 3.0, linestyle='None')[0];
     phaseobj.append(obj);
 
 def animate(t):
@@ -90,11 +97,11 @@ def animate(t):
     global phase;
     if (t==0):
         return tuple(point);
-    numsteps = int(1+ int(t/10)*0.05)*STEPS;
+    numsteps = int(np.power((1.025), int(t/8))*STEPS);
     for ptNum, pt in enumerate(point):
         for i in range(0, numsteps):
             newpos = propagate(pos[ptNum], vel[ptNum]);
-            if(newpos[0]*pos[ptNum][0] < 0):
+            if(newpos[0]*pos[ptNum][0] < 0 and newpos[1] > 0):
                 phase[ptNum][0].append(newpos[1]);
                 phase[ptNum][1].append(vel[ptNum][1]);
                 #if (ptNum == 0):
@@ -109,7 +116,7 @@ def animate(t):
     return tuple(point) + tuple(phaseobj)
 
 
-ani = animation.FuncAnimation(fig, animate, frames=5000, blit=True);
+ani = animation.FuncAnimation(fig, animate, frames=2100, blit=True);
 
 ani.save('test_animation.mp4', fps=30, extra_args=['-vcodec', 'libx264']);
 
